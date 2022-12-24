@@ -1,13 +1,16 @@
 import cv2
 import time
+from mailer import sendmail
 
 video = cv2.VideoCapture(0)             # get webcam
 time.sleep(1)                           # give webcam time to start
 
 first_frame = None
+status_list = []
 while True:
+    status = 0
     check, frame = video.read()         # get check and frame
-    print(f'{check=}')
+    # print(f'{check=}')
 
     # image preprocessing:
     grayframe = cv2.cvtColor(           # convert to grayscale to lower the amount of data in the matrix
@@ -54,20 +57,27 @@ while True:
         if cv2.contourArea(contour) < 5000:
             continue
         x, y, w, h = cv2.boundingRect(contour)
-        cv2.rectangle(
+        rectangle = cv2.rectangle(
                 frame,                  # original frame
                 (x, y),                 # top-left corner
                 (x + w, y + h),         # low-right corner
                 (0, 255, 0),            # color
                 3                       # width
         )
+        if rectangle.any():
+            status = 1
 
+    status_list.append(status)
+    status_list = status_list[-2:]
+    # print
+    if status_list[0] == 1 and status_list[1] == 0:
+        sendmail()
     cv2.imshow("output", frame)
 
     key = cv2.waitKey(1)                # wait for keyboard press for a millisecond (0 == forever)
-    print(f'{key=}')                    # -1 == no key pressed
+    # print(f'{key=}')                    # -1 == no key pressed
     if key == ord('q'):                 # 'q' == 113
-        print(f'{key=} is "q"')
+        # print(f'{key=} is "q"')
         break
 
 video.release()                         # close webcam
