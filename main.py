@@ -10,7 +10,6 @@ status_list = []
 while True:
     status = 0
     check, frame = video.read()         # get check and frame
-    # print(f'{check=}')
 
     # image preprocessing:
     grayframe = cv2.cvtColor(           # convert to grayscale to lower the amount of data in the matrix
@@ -24,30 +23,30 @@ while True:
                 0                       # standard deviation
     )
 
-    # first_frame = first_frame or gray_frame_gau
     if first_frame is None:
         first_frame = gray_frame_gau
 
-    delta_frame = cv2.absdiff(first_frame, gray_frame_gau)
+    delta_frame = cv2.absdiff(          # calculate difference between frame matrixes
+                first_frame,
+                gray_frame_gau
+    )
 
-    # classify frame
-    thresh_frame = cv2.threshold(
+    thresh_frame = cv2.threshold(       # classify frame
                 delta_frame,
                 60,                     # threshold
                 255,                    # change to 255
                 cv2.THRESH_BINARY       # algorythm
     )[1]                                # get second item
 
-    # clean frame
-    dil_frame = cv2.dilate(
+    dil_frame = cv2.dilate(             # clean frame
                 thresh_frame,
                 None,                   # config array
                 iterations=2            # number of iterations
     )
-    # show webcam frame
-    cv2.imshow('webcam', dil_frame)
 
-    contours, check = cv2.findContours(
+    cv2.imshow('webcam', dil_frame)     # show webcam frame
+
+    contours, chk = cv2.findContours(   # detect contours
                 dil_frame,
                 cv2.RETR_EXTERNAL,
                 cv2.CHAIN_APPROX_SIMPLE
@@ -56,28 +55,32 @@ while True:
     for contour in contours:
         if cv2.contourArea(contour) < 5000:
             continue
-        x, y, w, h = cv2.boundingRect(contour)
-        rectangle = cv2.rectangle(
+        x, y, w, h = cv2.boundingRect(  # find contour rectangle
+                contour
+        )
+
+        rectangle = cv2.rectangle(      # draw rectangle on frame
                 frame,                  # original frame
                 (x, y),                 # top-left corner
                 (x + w, y + h),         # low-right corner
                 (0, 255, 0),            # color
                 3                       # width
         )
-        if rectangle.any():
+
+        if rectangle.any():             # change status to 1 if we have a rectangle
             status = 1
 
     status_list.append(status)
-    status_list = status_list[-2:]
-    # print
-    if status_list[0] == 1 and status_list[1] == 0:
+    status_list = status_list[-2:]      # cut the list, leaving last 2 items
+
+    before, after = status_list         # extract statuses
+    if before == 1 and after == 0:      # if objects exited from view
         sendmail()
     cv2.imshow("output", frame)
 
     key = cv2.waitKey(1)                # wait for keyboard press for a millisecond (0 == forever)
-    # print(f'{key=}')                    # -1 == no key pressed
+                                        # -1 == no key pressed
     if key == ord('q'):                 # 'q' == 113
-        # print(f'{key=} is "q"')
         break
 
 video.release()                         # close webcam
