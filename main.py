@@ -2,11 +2,19 @@ import cv2
 import time
 from mailer import sendmail
 
+import shutil as sh
+import os
+import glob
+
+sh.rmtree('images/', ignore_errors=True)
+os.mkdir('images/')
+
 video = cv2.VideoCapture(0)             # get webcam
 time.sleep(1)                           # give webcam time to start
 
 first_frame = None
-status_list = []
+status_list = [0, 0]
+count = 1
 while True:
     status = 0
     check, frame = video.read()         # get check and frame
@@ -70,8 +78,17 @@ while True:
         if rectangle.any():             # change status to 1 if we have a rectangle
             status = 1
 
+            cv2.imwrite(f'images/{count}.png', frame)
+            count += 1
+
+            images = glob.glob('images/*.png')
+            middle = len(images) // 2
+            image = images[middle]
+            print(image)
+
     status_list.append(status)
     status_list = status_list[-2:]      # cut the list, leaving last 2 items
+    print(status_list)
 
     before, after = status_list         # extract statuses
     if before == 1 and after == 0:      # if objects exited from view
