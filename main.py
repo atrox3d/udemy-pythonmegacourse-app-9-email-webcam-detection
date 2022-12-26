@@ -23,9 +23,9 @@ def clean_images():
 def thread_logger(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-        print(func.__name__, 'START')
+        print(func.__name__, *args, 'START')
         func(*args, **kwargs)
-        print(func.__name__, 'END')
+        print(func.__name__, *args, 'END')
     return wrapper
 
 
@@ -111,16 +111,18 @@ while True:
         images = glob.glob('images/*.png')
         middle = len(images) // 2
         image = images[middle]
+
         print(f'Sending {image}...')
-
         send_mail = thread_logger(send_mail)
-        mail_thread = Thread(target=send_mail, args=('python webcam detection', 'caught this on webcam', image))
-        # mail_thread.daemon = True
-        mail_thread.start()
-
-        clean_images = thread_logger(clean_images)
-        # clean_thread = Thread(target=clean_images)
-        # clean_thread.daemon = True
+        try:
+            if mail_thread.is_alive():
+                pass
+        except NameError:
+            pass
+        finally:
+            mail_thread = Thread(target=send_mail, args=('python webcam detection', 'caught this on webcam', image))
+            # mail_thread.daemon = True
+            mail_thread.start()
 
     cv2.imshow("output", frame)
 
@@ -131,5 +133,6 @@ while True:
         break
 
 video.release()                         # close webcam
+clean_images = thread_logger(clean_images)
 clean_images()
 
