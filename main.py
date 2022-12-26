@@ -1,10 +1,12 @@
 import cv2
 import time
-from mailer import send_mail
-
 import shutil as sh
 import os
 import glob
+from threading import Thread
+from functools import wraps
+
+from mailer import send_mail
 
 
 def reset_images():
@@ -16,6 +18,15 @@ def clean_images():
     images = glob.glob('images/*.png')
     for image in images:
         os.remove(image)
+
+
+def thread_logger(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        print(func.__name__, 'START')
+        func(*args, **kwargs)
+        print(func.__name__, 'END')
+    return wrapper
 
 
 video = cv2.VideoCapture(0)             # get webcam
@@ -100,17 +111,25 @@ while True:
         images = glob.glob('images/*.png')
         middle = len(images) // 2
         image = images[middle]
-        print(image)
-        send_mail('python webcam detection', 'caught this on webcam', image)
-        clean_images()
+        print(f'Sending {image}...')
+
+        send_mail = thread_logger(send_mail)
+        mail_thread = Thread(target=send_mail, args=('python webcam detection', 'caught this on webcam', image))
+        # mail_thread.daemon = True
+        mail_thread.start()
+
+        clean_images = thread_logger(clean_images)
+        # clean_thread = Thread(target=clean_images)
+        # clean_thread.daemon = True
 
     cv2.imshow("output", frame)
 
     key = cv2.waitKey(1)                # wait for keyboard press for a millisecond (0 == forever)
                                         # -1 == no key pressed
-    print(key)
+    # print(key)
     if key == ord('q'):                 # 'q' == 113
         break
 
 video.release()                         # close webcam
+clean_images()
 
