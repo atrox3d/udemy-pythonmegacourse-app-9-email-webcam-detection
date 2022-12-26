@@ -29,6 +29,8 @@ def thread_logger(func):
     return wrapper
 
 
+send_mail = thread_logger(send_mail)
+
 video = cv2.VideoCapture(0)             # get webcam
 time.sleep(1)                           # give webcam time to start
 
@@ -113,7 +115,6 @@ while True:
         image = images[middle]
 
         print(f'Sending {image}...')
-        send_mail = thread_logger(send_mail)
         try:
             if mail_thread.is_alive():
                 pass
