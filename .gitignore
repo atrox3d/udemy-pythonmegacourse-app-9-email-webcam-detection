@@ -9,3 +9,5 @@ todos.txt
 /gui.spec
 /bonus/camera-photos/
 /images/
+
+__pycache__
